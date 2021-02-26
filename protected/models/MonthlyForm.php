@@ -105,8 +105,8 @@ class MonthlyForm extends CFormModel
 		$suffix = Yii::app()->params['envSuffix'];
 		$citylist = Yii::app()->user->city_allow();
 		$sql = "select a.year_no, a.month_no, b.id, b.hdr_id, b.data_field, b.data_value, c.name, c.upd_type, c.field_type, c.function_name, b.manual_input, a.lcd, 
-				a.city, d.name as city_name, workflow$suffix.RequestStatus('OPRPT',a.id,a.lcd) as wfstatus,
-				workflow$suffix.RequestStatusDesc('OPRPT',a.id,a.lcd) as wfstatusdesc,
+				a.city, d.name as city_name, workflow$suffix.RequestStatus(a.city,'OPRPT',a.id,a.lcd) as wfstatus,
+				workflow$suffix.RequestStatusDesc(a.city,'OPRPT',a.id,a.lcd) as wfstatusdesc,
 				docman$suffix.countdoc('OPER1',a.id) as oper1countdoc,
 				docman$suffix.countdoc('OPER2',a.id) as oper2countdoc,
 				docman$suffix.countdoc('OPER3',a.id) as oper3countdoc,
@@ -154,7 +154,7 @@ class MonthlyForm extends CFormModel
 		if ($this->wfstatus=='PA' || $this->wfstatus=='PH') {
 			$wf = new WorkflowOprpt;
 			$connection = $wf->openConnection();
-			if ($wf->initReadOnlyProcess('OPRPT',$this->id,$this->lcd)) {
+			if ($wf->initReadOnlyProcess('OPRPT',$this->id,$this->lcd,$this->city)) {
 				$actionusers = $wf->getCurrentStateRespUser();
 				$this->wfactionuser = empty($actionusers) ? '' : implode('/',$actionusers);
 			}
@@ -163,7 +163,7 @@ class MonthlyForm extends CFormModel
 		if ($this->wfstatus=='PS') {
 			$wf = new WorkflowOprpt;
 			$connection = $wf->openConnection();
-			if ($wf->initReadOnlyProcess('OPRPT',$this->id,$this->lcd)) {
+			if ($wf->initReadOnlyProcess('OPRPT',$this->id,$this->lcd, $this->city)) {
 				$reasons1 = $wf->getLastStateActionRemarks('DENY');
 				$reasons2 = $wf->getLastStateActionRemarks('HDDENY');
 				$reasons = array_merge($reasons1, $reasons2);
@@ -187,7 +187,7 @@ class MonthlyForm extends CFormModel
 			$this->updateDocman($connection,'OPER2');
 			$this->updateDocman($connection,'OPER3');
 			$this->updateDocman($connection,'OPER4');
-			if ($wf->startProcess('OPRPT',$this->id,$this->lcd)) {
+			if ($wf->startProcess('OPRPT',$this->id,$this->lcd,$this->city)) {
 				$wf->saveRequestData('CITY',$this->city);
 				$wf->saveRequestData('CITYNAME',$this->city_name);
 				$wf->saveRequestData('REQ_USER',Yii::app()->user->id);
@@ -230,7 +230,7 @@ class MonthlyForm extends CFormModel
 		$connection = $wf->openConnection();
 		try {
 //			$this->saveMonthly($connection);
-			if ($wf->startProcess('OPRPT',$this->id,$this->lcd)) {
+			if ($wf->startProcess('OPRPT',$this->id,$this->lcd,$this->city)) {
 				$wf->takeAction('APPROVE');
 			}
 			$wf->transaction->commit();
@@ -247,7 +247,7 @@ class MonthlyForm extends CFormModel
 		$connection = $wf->openConnection();
 		try {
 //			$this->saveMonthly($connection);
-			if ($wf->startProcess('OPRPT',$this->id,$this->lcd)) {
+			if ($wf->startProcess('OPRPT',$this->id,$this->lcd,$this->city)) {
 				$wf->takeAction('HDAPPROVE');
 			}
 			$wf->transaction->commit();
@@ -264,7 +264,7 @@ class MonthlyForm extends CFormModel
 		$connection = $wf->openConnection();
 		try {
 //			$this->saveMonthly($connection);
-			if ($wf->startProcess('OPRPT',$this->id,$this->lcd)) {
+			if ($wf->startProcess('OPRPT',$this->id,$this->lcd,$this->city)) {
 				$wf->takeAction('DENY',$this->reason);
 			}
 			$wf->transaction->commit();
@@ -281,7 +281,7 @@ class MonthlyForm extends CFormModel
 		$connection = $wf->openConnection();
 		try {
 //			$this->saveMonthly($connection);
-			if ($wf->startProcess('OPRPT',$this->id,$this->lcd)) {
+			if ($wf->startProcess('OPRPT',$this->id,$this->lcd,$this->city)) {
 				$wf->takeAction('HDDENY',$this->reason);
 			}
 			$wf->transaction->commit();
@@ -389,5 +389,13 @@ class MonthlyForm extends CFormModel
 	
 	public function isReadOnly() {
 		return ($this->scenario=='view'|| strpos('~~PS~','~'.$this->wfstatus.'~')===false);
+	}
+	
+	public function getMonthlyRate() {
+		$city = $this->city;
+		$sql = "select rate from opr_monthly_rate where city='$city' or city='~ZZZZ' order by city limit 1";
+		$row = Yii::app()->db->createCommand($sql)->queryRow();
+		$rate = json_decode($row['rate'],true);
+		return $rate;
 	}
 }

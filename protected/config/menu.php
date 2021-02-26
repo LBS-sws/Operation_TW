@@ -100,6 +100,10 @@ return array(
                 'access'=>'YA02',
                 'url'=>'/monthly/indexc',
             ),
+			'Sales Summary Rate'=>array(
+				'access'=>'YA04',
+				'url'=>'/monthlyrate/index',
+			),
         ),
     ),
 

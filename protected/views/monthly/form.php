@@ -204,6 +204,7 @@ $this->pageTitle=Yii::app()->name . ' - Sales Summary Form';
 ?>
 <?php $this->renderPartial('//monthly/reason',array('model'=>$model,'form'=>$form)); ?>
 
+<?php $rate = $model->getMonthlyRate(); ?>
 <script>
 function roundNumber(num, scale) {
   if(!("" + num).includes("e")) {
@@ -227,8 +228,8 @@ function roundNumber(num, scale) {
 			$('#MonthlyForm_record_12_datavalue').val(parseFloat(+$('#MonthlyForm_record_12_datavalue').val() || 0 ).toFixed(2));
 			$('#MonthlyForm_record_7_datavalue').val((parseFloat(document.getElementById('MonthlyForm_record_1_datavalue').value) + parseFloat(document.getElementById('MonthlyForm_record_2_datavalue').value) + parseFloat(document.getElementById('MonthlyForm_record_3_datavalue').value) + parseFloat(document.getElementById('MonthlyForm_record_4_datavalue').value) + parseFloat(document.getElementById('MonthlyForm_record_5_datavalue').value)).toFixed(2));
 			var total = parseFloat(document.getElementById('MonthlyForm_record_7_datavalue').value) + parseFloat(document.getElementById('MonthlyForm_record_12_datavalue').value);
-			$('#MonthlyForm_record_8_datavalue').val(roundNumber((total * 8.5 / 100),2));
-			$('#MonthlyForm_record_9_datavalue').val(roundNumber((parseFloat(document.getElementById('MonthlyForm_record_6_datavalue').value) * 3.5 / 100),2));
+			$('#MonthlyForm_record_8_datavalue').val(roundNumber((total * <?php echo $rate['SP'];?> / 100),2));
+			$('#MonthlyForm_record_9_datavalue').val(roundNumber((parseFloat(document.getElementById('MonthlyForm_record_6_datavalue').value) * <?php echo $rate['PP'];?> / 100),2));
 			$('#MonthlyForm_record_10_datavalue').val((parseFloat(document.getElementById('MonthlyForm_record_8_datavalue').value) + parseFloat(document.getElementById('MonthlyForm_record_9_datavalue').value)).toFixed(2));
 			$('#MonthlyForm_record_11_datavalue').val((parseFloat(document.getElementById('MonthlyForm_record_6_datavalue').value) + parseFloat(document.getElementById('MonthlyForm_record_7_datavalue').value)).toFixed(2));
 			$('#MonthlyForm_record_13_datavalue').val(parseFloat(+$('#MonthlyForm_record_13_datavalue').val() || 0 ).toFixed(2));
