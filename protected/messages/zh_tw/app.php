@@ -33,6 +33,7 @@ return array(
 'Sales Summary Approval - HQ'=>'營業報告審核(總部)',
 'Sales Summary Approval - Manager'=>'營業報告審核(經理)',
 'Sales Summary Approval'=>'營業報告審核',
+'Sales Summary Rate'=>'專利權比例',
 
 'Report'=>'報表',
 'Sales Summary'=>'營業報告',

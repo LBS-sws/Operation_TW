@@ -32,6 +32,7 @@ return array(
 	'Sales Summary Approval - HQ'=>'营业报告审核(总部)',
 	'Sales Summary Approval - Manager'=>'营业报告审核(经理)',
 	'Sales Summary Approval'=>'营业报告审核',
+	'Sales Summary Rate'=>'专利权比例',
 
     'Report'=>'报表',
     'Sales Summary'=>'营业报告',

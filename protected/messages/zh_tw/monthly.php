@@ -16,5 +16,13 @@ return array(
 'Statement'=>'月結單明細',
 'Please upload'=>'請上傳',
 'Please enter reason'=>'請輸入原因',
+'Rate'=>'比例',
+'Sales Summary Rate'=>'專利權比例',
+'Sales Summary Rate List'=>'專利權比例列表',
+'Sales Summary Rate Form'=>'專利權比例表單',
+' cannnot be empty'=>'不能為空白',
+'Service Patent Fee'=>'服務專利權比例',
+'Paper Patent Fee'=>'紙品專利權比例',
+'Default'=>'默認',
 );
 ?>
