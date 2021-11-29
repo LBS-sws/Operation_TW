@@ -27,6 +27,17 @@ class General extends CGeneral {
 			return '2016/01/01';
 		}
 	}
+	
+    /*
+     * 獲取必須測驗的測驗單id
+     */
+    public static function getQuizIdForMust(){
+        $suffix = Yii::app()->params['envSuffix'];
+        $quiz_id = Yii::app()->db->createCommand()
+            ->select("id")->from("quiz$suffix.exa_quiz")
+            ->order("join_must desc,id asc")->queryScalar();
+        return $quiz_id?$quiz_id:0;
+    }
 
     /*
      * 判斷系統位置
