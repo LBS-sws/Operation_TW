@@ -1,0 +1,1 @@
+ALTER TABLE opr_monthly_field ADD COLUMN z_index int(8) NOT NULL DEFAULT 0 COMMENT '顯示順序(asc升序)' AFTER function_name
