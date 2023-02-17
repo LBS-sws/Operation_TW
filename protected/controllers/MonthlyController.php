@@ -30,7 +30,7 @@ class MonthlyController extends Controller
 				'expression'=>array('MonthlyController','allowReadWriteC'),
 			),
 			array('allow', 
-				'actions'=>array('index','view','filedownload'),
+				'actions'=>array('index','view','filedownload','addMonthType','addType','filedownload'),
 				'expression'=>array('MonthlyController','allowReadOnly'),
 			),
 			array('allow', 
@@ -47,7 +47,7 @@ class MonthlyController extends Controller
 		);
 	}
 
-	// To override the checking in components/Controller.php
+    // To override the checking in components/Controller.php
 	public function beforeAction($action) {
 		$index_id = $action->getId();
 		if (strpos('index/indexa/indexc/edit/view/', $index_id.'/')!==false) {
@@ -61,6 +61,88 @@ class MonthlyController extends Controller
 			return true;
 		}
 	}
+
+    //add opr_monthly_field mysql
+	public function actionAddType() {
+        $sql = "select count(*) from information_schema.columns where table_name = 'opr_monthly_hdr' and column_name = 'group_id'";
+        $column = Yii::app()->db->createCommand($sql)->queryScalar();
+        if($column>0) {
+            echo "error:have group_id</br>";
+            return false;
+        }
+        $sql = "select * from opr_monthly_field WHERE function_name='1001' or code='11001' or name='空气净化机租赁'";
+        $typeRow = Yii::app()->db->createCommand($sql)->queryRow();
+        if($typeRow){
+            var_dump($typeRow);
+            echo "have opr_monthly_field</br>";
+        }else{
+            Yii::app()->db->createCommand()->insert('opr_monthly_field', array(
+                'code'=>"11001",
+                'name'=>"空气净化机租赁",
+                'upd_type'=>"M",
+                'field_type'=>"N",
+                'status'=>"Y",
+                'function_name'=>"1001",
+                'lcu'=>"shenchao"
+            ));
+            echo "add opr_monthly_field success!</br>";
+        }
+        echo "</br>end;</br>";
+        $sql = "select count(*) from information_schema.columns where table_name = 'opr_monthly_field' and column_name = 'z_index'";
+        $column = Yii::app()->db->createCommand($sql)->queryScalar();
+        if($column==0){
+            $sql = "ALTER TABLE opr_monthly_field ADD COLUMN z_index int(8) NOT NULL DEFAULT 0 COMMENT '顯示順序(asc升序)' AFTER function_name";
+            Yii::app()->db->createCommand($sql)->execute();
+            $sql = "select code,function_name from opr_monthly_field";
+            $rows = Yii::app()->db->createCommand($sql)->queryAll();
+            if($rows){
+                foreach ($rows as $row){
+                    $number = is_numeric($row["function_name"])?floatval($row["function_name"]):1;
+                    $number*=2;
+                    $number = 1001*2==$number?11:$number;
+                    Yii::app()->db->createCommand()->update('opr_monthly_field', array(
+                        'z_index'=>$number
+                    ),"code=:code",array("code"=>$row["code"]));
+                }
+            }
+        }
+        Yii::app()->end();
+	}
+
+	//add opr_monthly_field mysql
+	public function actionAddMonthType(){
+        $suffix = Yii::app()->params['envSuffix'];
+        $sql = "select a.code
+				from security$suffix.sec_city a left outer join security$suffix.sec_city b on a.code=b.region 
+				where b.code is null 
+				order by a.code
+			";
+        $rows = Yii::app()->db->createCommand($sql)->queryAll();
+        if (count($rows) > 0) {
+            foreach ($rows as $row) {
+                $city = $row['code'];
+                echo "CITY: $city<br/>";
+                $sql = "select id from opr_monthly_hdr 
+						where city='$city' and year_no=2023 and month_no in (1,2)";
+                $rcs = Yii::app()->db->createCommand($sql)->queryAll();
+                if($rcs){
+                    foreach ($rcs as $rc){
+                        $sql = "select id from opr_monthly_dtl WHERE hdr_id={$rc['id']} and data_field='11001'";
+                        $bool = Yii::app()->db->createCommand($sql)->queryScalar();
+                        if(!$bool){
+                            Yii::app()->db->createCommand()->insert('opr_monthly_dtl', array(
+                                'data_field'=>"11001",
+                                'hdr_id'=>$rc['id'],
+                                'data_value'=>"0.00",
+                                'manual_input'=>"Y",
+                                'lcu'=>"shenchao"
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 	public function actionIndex($pageNum=0) 
 	{

@@ -116,7 +116,7 @@ class MonthlyForm extends CFormModel
 				and a.id=b.hdr_id and b.data_field=c.code
 				and a.city=d.code 
 				and c.status='Y'
-				order by a.year_no, a.month_no, b.data_field
+				order by a.year_no, a.month_no, c.z_index
 			";
 		$rows = Yii::app()->db->createCommand($sql)->queryAll();
 		if (count($rows) > 0) {

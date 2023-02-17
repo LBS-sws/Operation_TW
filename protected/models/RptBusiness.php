@@ -42,7 +42,7 @@ class RptBusiness extends CReport {
                 a.year_no = '$year'
             AND a.month_no = '$month'
             AND a.id = b.hdr_id
-            AND b.data_field = c.code $sql";
+            AND b.data_field = c.code $sql order by a.city, a.year_no, a.month_no, c.z_index";
 		$rows = Yii::app()->db->createCommand($sql)->queryAll();
 		if (count($rows) > 0) {
 			$temp = array();

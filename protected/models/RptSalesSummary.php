@@ -18,6 +18,7 @@ class RptSalesSummary extends CReport {
 				'clean'=>Yii::t('report','Clean_PC_Misc_Paper'),
 				'puri'=>Yii::t('report','Puriscent'),
 				'meth'=>Yii::t('report','Formaldehye'),
+				'air'=>Yii::t('report','Air purifier rental'),//¿ÕÆø¾»»¯»ú×âÁÞ
 				'rptname'=>Yii::t('report','Sales Summary Report'),
 			);
 		$this->retrieveData();
@@ -46,7 +47,7 @@ class RptSalesSummary extends CReport {
 		
 		$sql = "select a.*, h.region, h.name as city_name, 
 					b.data_value as cln, c.data_value as pc, d.data_value as misc,
-					e.data_value as puri, f.data_value as meth, g.data_value as ppr,
+					e.data_value as puri, f.data_value as meth, k.data_value as air, g.data_value as ppr,
 					workflow$suffix.RequestStatus('OPRPT',a.id,a.lcd) as wfstatus
 				from opr_monthly_hdr a 
 					inner join security$suffix.sec_city h on a.city=h.code 
@@ -56,6 +57,7 @@ class RptSalesSummary extends CReport {
 					left outer join opr_monthly_dtl e on a.id=e.hdr_id and e.data_field='10004'
 					left outer join opr_monthly_dtl f on a.id=f.hdr_id and f.data_field='10005'
 					left outer join opr_monthly_dtl g on a.id=g.hdr_id and g.data_field='10006'
+					left outer join opr_monthly_dtl k on a.id=k.hdr_id and k.data_field='11001'
 				where a.year_no=$year and a.month_no<=$month and
 					a.city in ($list)
 				order by h.region, a.city, a.year_no, a.month_no 
@@ -82,6 +84,7 @@ class RptSalesSummary extends CReport {
 					$row['misc'] = 0;
 					$row['puri'] = 0;
 					$row['meth'] = 0;
+					$row['air'] = 0;
 					$row['ppr'] = 0;
 				}
 				
@@ -114,7 +117,7 @@ class RptSalesSummary extends CReport {
 		$this->excel->start();
 		
 		$this->excel->newFile();
-		for ($sht=1; $sht<=4; $sht++) {
+		for ($sht=1; $sht<=5; $sht++) {
 			if ($sht>1) {
 				$this->excel->createSheet();
 				$this->excel->setActiveSheet($sht-1);
@@ -123,6 +126,7 @@ class RptSalesSummary extends CReport {
 			if ($sht==2) $sheetname = $this->labels['clean'];
 			if ($sht==3) $sheetname = $this->labels['puri'];
 			if ($sht==4) $sheetname = $this->labels['meth'];
+			if ($sht==5) $sheetname = $this->labels['air'];
 
 			$this->excel->getActiveSheet()->setTitle($sheetname);
 			$this->excel->setReportDefaultFormat();
