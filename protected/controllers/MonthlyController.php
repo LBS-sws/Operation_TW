@@ -64,14 +64,14 @@ class MonthlyController extends Controller
 
     //add opr_monthly_field mysql
 	public function actionAddType() {
-        $sql = "select id from opr_monthly_field WHERE function_name='1001' and code='11001' and name='空气净化机租赁'";
+        $sql = "select code from opr_monthly_field WHERE function_name='1001' and code='11001' and name='空气净化机租赁'";
         $typeRow = Yii::app()->db->createCommand($sql)->queryRow();
         if($typeRow){
             Yii::app()->db->createCommand()->delete('opr_monthly_field', "code='11001' and function_name='1001'");
             Yii::app()->db->createCommand()->delete('opr_monthly_dtl', "data_field='11001'");
             echo "</br>delete success;</br>";
         }
-        $sql = "select id from opr_monthly_field WHERE function_name='13' and code='100055'";
+        $sql = "select code from opr_monthly_field WHERE function_name='13' and code='100055'";
         $typeRow = Yii::app()->db->createCommand($sql)->queryRow();
         if(!$typeRow){
             echo "</br>error not find code:100055;</br>";
