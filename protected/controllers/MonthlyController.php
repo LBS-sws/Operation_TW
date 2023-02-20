@@ -75,7 +75,7 @@ class MonthlyController extends Controller
         $typeRow = Yii::app()->db->createCommand($sql)->queryRow();
         if(!$typeRow){
             echo "</br>error not find code:100055;</br>";
-            return false;
+            Yii::app()->end();
         }
         $suffix = Yii::app()->params['envSuffix'];
         $sql = "select a.code
