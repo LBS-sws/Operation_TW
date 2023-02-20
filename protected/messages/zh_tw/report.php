@@ -62,5 +62,7 @@ return array(
 'Order Person'=>'申請人',
 // Percy 2018/2/8
 'Item Price'=>'參考售價',
+// shenchao 2023/2/20
+	'Air purifier rental'=>'空氣凈化機租賃',
 );
 ?>

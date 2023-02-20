@@ -205,6 +205,7 @@ class RptSalesSummary extends CReport {
 				$puri = empty($row['puri']) ? 0 : $row['puri'];
 				$meth = empty($row['meth']) ? 0 : $row['meth'];
 				$ppr = empty($row['ppr']) ? 0 : $row['ppr'];
+                $air = empty($row['air']) ? 0 : $row['air'];
 			
 				if ($type==1) $val = $cln + $pc + $misc + $puri + $meth + $ppr;
 				if ($type==2) $val = $cln + $pc + $misc + $ppr;
