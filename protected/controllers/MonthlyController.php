@@ -74,8 +74,16 @@ class MonthlyController extends Controller
         $sql = "select code from opr_monthly_field WHERE function_name='13' and code='100055'";
         $typeRow = Yii::app()->db->createCommand($sql)->queryRow();
         if(!$typeRow){
-            echo "</br>error not find code:100055;</br>";
-            Yii::app()->end();
+            Yii::app()->db->createCommand()->insert('opr_monthly_field', array(
+                'code'=>"100055",
+                'name'=>"空气净化机租赁",
+                'upd_type'=>"M",
+                'field_type'=>"N",
+                'status'=>"Y",
+                'function_name'=>"13",
+                'lcu'=>"shenchao"
+            ));
+            echo "</br>add code:100055;</br>";
         }
         $suffix = Yii::app()->params['envSuffix'];
         $sql = "select a.code
