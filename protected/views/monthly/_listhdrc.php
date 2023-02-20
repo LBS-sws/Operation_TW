@@ -48,7 +48,7 @@
 		?>
 	</th>
 	<th>
-		<?php echo TbHtml::link(Yii::t("monthly",'空气净化机租赁').$this->drawOrderArrow('val_16'),'#',$this->createOrderLink('monthly-list','val_1001'))
+		<?php echo TbHtml::link(Yii::t("monthly",'空气净化机租赁').$this->drawOrderArrow('val_13'),'#',$this->createOrderLink('monthly-list','val_13'))
 			;
 		?>
 	</th>

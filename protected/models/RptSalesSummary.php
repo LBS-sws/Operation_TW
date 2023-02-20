@@ -57,7 +57,7 @@ class RptSalesSummary extends CReport {
 					left outer join opr_monthly_dtl e on a.id=e.hdr_id and e.data_field='10004'
 					left outer join opr_monthly_dtl f on a.id=f.hdr_id and f.data_field='10005'
 					left outer join opr_monthly_dtl g on a.id=g.hdr_id and g.data_field='10006'
-					left outer join opr_monthly_dtl k on a.id=k.hdr_id and k.data_field='11001'
+					left outer join opr_monthly_dtl k on a.id=k.hdr_id and k.data_field='100055'
 				where a.year_no=$year and a.month_no<=$month and
 					a.city in ($list)
 				order by h.region, a.city, a.year_no, a.month_no 
@@ -210,6 +210,7 @@ class RptSalesSummary extends CReport {
 				if ($type==2) $val = $cln + $pc + $misc + $ppr;
 				if ($type==3) $val = $puri;
 				if ($type==4) $val = $meth;
+				if ($type==5) $val = $air;
 			
 				$this->excel->writeCell($x, $y, $val, array('align'=>'R'));
 				$this->excel->setCellStyle($x, $y, array('numberformat'=>'#,##0.00'));

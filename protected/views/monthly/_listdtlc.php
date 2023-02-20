@@ -11,7 +11,7 @@
 	<td><?php echo $this->record['val_3']; ?></td>
 	<td><?php echo $this->record['val_4']; ?></td>
 	<td><?php echo $this->record['val_5']; ?></td>
-    <td><?php echo $this->record['val_1001']; ?></td>
+    <td><?php echo $this->record['val_13']; ?></td>
 	<td><?php echo $this->record['val_11']; ?></td>
 	<td><?php echo $this->record['wfstatusdesc']; ?></td>
 </tr>
