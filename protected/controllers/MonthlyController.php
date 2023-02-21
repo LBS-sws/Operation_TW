@@ -76,7 +76,7 @@ class MonthlyController extends Controller
         if(!$typeRow){
             Yii::app()->db->createCommand()->insert('opr_monthly_field', array(
                 'code'=>"100055",
-                'name'=>"空气净化机租赁",
+                'name'=>"空气净化机租赁及销售",
                 'upd_type'=>"M",
                 'field_type'=>"N",
                 'status'=>"Y",
@@ -84,6 +84,11 @@ class MonthlyController extends Controller
                 'lcu'=>"shenchao"
             ));
             echo "</br>add code:100055;</br>";
+        }else{
+            Yii::app()->db->createCommand()->update('opr_monthly_field', array(
+                'name'=>"空气净化机租赁及销售"
+            ),"function_name='13' and code='100055'");
+            echo "</br>update name:100055;</br>";
         }
         $suffix = Yii::app()->params['envSuffix'];
         $sql = "select a.code
