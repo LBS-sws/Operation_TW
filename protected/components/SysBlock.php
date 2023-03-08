@@ -15,9 +15,14 @@ class SysBlock {
         $sysId = Yii::app()->params['systemId'];
 
         foreach ($this->checkItems as $key=>$value) {
-            if (!isset($sysblock[$key]) || $sysblock[$key]==false) {
-                $result = call_user_func_array('self::'.$value['validation'],array($key,&$value));
-                $sysblock[$key] = $result;
+            if (!isset($sysblock[$key]) || $sysblock[$key]["bool"]==false) {
+                $function = $value['validation'];
+                $result = $this->$function($key,$value);
+                //$result = call_user_func_array('self::'.$value['validation'],array($key,&$value));
+                $sysblock[$key] = array(
+                    "bool"=>$result,
+                    'fun'=>$value
+                );
                 $session['sysblock'] = $sysblock;
                 //function設置為空時，只提示一次，不限制行為(start)
                 if($value['function']===""){
@@ -49,8 +54,10 @@ class SysBlock {
     public function getBlockMessage($systemId) {
         $session = Yii::app()->session;
         if (isset($session['sysblock'])) {
-            foreach ($session['sysblock'] as $key=>$value) {
-                if (!$value && isset($this->checkItems[$key])) {
+            foreach ($session['sysblock'] as $key=>$value) {//後續把value改成了數組類型
+                if (is_array($value)&&!$value["bool"]) {
+                    return $value["fun"]['message'];
+                }elseif(!$value && isset($this->checkItems[$key])) {
                     return $this->checkItems[$key]['message'];
                 }
             }
@@ -69,7 +76,7 @@ class SysBlock {
         $row = Yii::app()->db->createCommand()->select("b.id")->from("hr$suffix.hr_binding a")
             ->leftJoin("hr$suffix.hr_employee b","a.employee_id=b.id")
             ->leftJoin("security$suffix.sec_user_access e","a.user_id=e.username")
-            ->where("a.user_id=:user_id and a_read_write like'%RE02%'",array(":user_id"=>$uid))->queryRow();
+            ->where("a.user_id=:user_id and e.system_id='hr' and e.a_read_write like'%RE02%'",array(":user_id"=>$uid))->queryRow();
         if($row){ //賬號有綁定的員工且有考核權限
             $year = date("Y");
             $day = date("m-d");
@@ -161,13 +168,18 @@ class SysBlock {
 
     /**
     每年12月30日, 驗證 用户有学分确认权限的未及时处理完, false: 未处理
+     * 2022/09/07 限制修改成：每个月倒数第二天限制专员和审核人必须审核完当前地区所有的申请记录
      **/
     public function isCreditConfirmed() {
         $uid = Yii::app()->user->id;
         $city = Yii::app()->user->city();
         $city_allow = Yii::app()->user->city_allow();
         $suffix = Yii::app()->params['envSuffix'];
-        $lastdate = date('m-d')=='12-31' ? date('Y-m-d') : date('Y-m-d',strtotime('last year December 31st'));
+        $monthFastDay = date("Y-m-01");//当月第一天
+        $monthLastDay = date("Y-m-d",strtotime($monthFastDay."+1 months -3 day"));//每个月倒数第二天
+        $lastdate = date("Y-m-d")>=$monthLastDay?$monthLastDay:date("Y-m-d",strtotime("{$monthFastDay} -1 day"));
+
+        //$lastdate = date('m-d')=='12-31' ? date('Y-m-d') : date('Y-m-d',strtotime('last year December 31st'));
         $year = date("Y", strtotime($lastdate));
         $month = date("m", strtotime($lastdate));
 
@@ -189,13 +201,18 @@ class SysBlock {
 
     /**
     每年12月30日, 驗證 用户有学分审核权限的未及时处理完, false: 未处理
+     * 2022/09/07 限制修改成：每个月倒数第二天限制专员和审核人必须审核完当前地区所有的申请记录
      **/
     public function isCreditApproved() {
         $uid = Yii::app()->user->id;
         $city = Yii::app()->user->city();
         $city_allow = Yii::app()->user->city_allow();
         $suffix = Yii::app()->params['envSuffix'];
-        $lastdate = date('m-d')=='12-31' ? date('Y-m-d') : date('Y-m-d',strtotime('last year December 31st'));
+        $monthFastDay = date("Y-m-01");//当月第一天
+        $monthLastDay = date("Y-m-d",strtotime($monthFastDay."+1 months -3 day"));//每个月倒数第二天
+        $lastdate = date("Y-m-d")>=$monthLastDay?$monthLastDay:date("Y-m-d",strtotime("{$monthFastDay} -1 day"));
+
+        //$lastdate = date('m-d')=='12-31' ? date('Y-m-d') : date('Y-m-d',strtotime('last year December 31st'));
         $year = date("Y", strtotime($lastdate));
         $month = date("m", strtotime($lastdate));
 
@@ -216,6 +233,88 @@ class SysBlock {
     }
 
     /**
+    每个月倒数第二天限制专员和审核人必须审核完当前地区所有的锦旗记录, false: 未处理
+     **/
+    public function isPrizeApproved () {
+        $uid = Yii::app()->user->id;
+        $city = Yii::app()->user->city();
+        $city_allow = Yii::app()->user->city_allow();
+        $suffix = Yii::app()->params['envSuffix'];
+        $monthFastDay = date("Y-m-01");//当月第一天
+        $monthLastDay = date("Y-m-d",strtotime($monthFastDay."+1 months -3 day"));//每个月倒数第二天
+        $lastdate = date("Y-m-d")>=$monthLastDay?$monthLastDay:date("Y-m-d",strtotime("{$monthFastDay} -1 day"));
+
+        $sql = "select a_control from security$suffix.sec_user_access 
+				where username='$uid' and system_id='hr' and a_read_write like '%ZG07%'
+			";
+        $row = Yii::app()->db->createCommand($sql)->queryRow();
+        if ($row===false) return true;
+
+        $sql = "select a.id from hr$suffix.hr_prize a 
+                LEFT JOIN hr$suffix.hr_employee b ON a.employee_id = b.id
+                where a.status =1 AND b.city IN ($city_allow) and a.lcd <= '$lastdate'
+				limit 1
+			";
+        $row = Yii::app()->db->createCommand($sql)->queryRow();
+        return ($row===false);
+    }
+
+    /**
+    每个月倒数第二天限制专员和审核人必须审核完当前地区所有的慈善分记录, false: 未处理
+     **/
+    public function isCharityApproved () {
+        $uid = Yii::app()->user->id;
+        $city = Yii::app()->user->city();
+        $city_allow = Yii::app()->user->city_allow();
+        $suffix = Yii::app()->params['envSuffix'];
+        $monthFastDay = date("Y-m-01");//当月第一天
+        $monthLastDay = date("Y-m-d",strtotime($monthFastDay."+1 months -3 day"));//每个月倒数第二天
+        $lastdate = date("Y-m-d")>=$monthLastDay?$monthLastDay:date("Y-m-d",strtotime("{$monthFastDay} -1 day"));
+
+        $sql = "select a_control from security$suffix.sec_user_access 
+				where username='$uid' and system_id='ch' and a_read_write like '%GA01%'
+			";
+        $row = Yii::app()->db->createCommand($sql)->queryRow();
+        if ($row===false) return true;
+
+        $sql = "select a.id from charity$suffix.cy_credit_request a
+                LEFT JOIN hr$suffix.hr_employee d ON a.employee_id = d.id
+                where (d.city IN ($city_allow) AND a.state = 1) and a.type_state='2' 
+			 and a.apply_date <= '$lastdate' limit 1
+			";
+        $row = Yii::app()->db->createCommand($sql)->queryRow();
+        return ($row===false);
+    }
+
+    /**
+    每个月倒数第二天限制专员和审核人必须审核完当前地区所有的慈善分记录, false: 未处理
+     **/
+    public function isCharityConfirmed () {
+        $uid = Yii::app()->user->id;
+        $city = Yii::app()->user->city();
+        $city_allow = Yii::app()->user->city_allow();
+        $suffix = Yii::app()->params['envSuffix'];
+        $monthFastDay = date("Y-m-01");//当月第一天
+        $monthLastDay = date("Y-m-d",strtotime($monthFastDay."+1 months -3 day"));//每个月倒数第二天
+        $lastdate = date("Y-m-d")>=$monthLastDay?$monthLastDay:date("Y-m-d",strtotime("{$monthFastDay} -1 day"));
+
+        $sql = "select a_control from security$suffix.sec_user_access 
+				where username='$uid' and system_id='ch' and a_read_write like '%GA03%'
+			";
+        $row = Yii::app()->db->createCommand($sql)->queryRow();
+        if ($row===false) return true;
+
+        $sql = "select a.id from charity$suffix.cy_credit_request a
+                LEFT JOIN hr$suffix.hr_employee d ON a.employee_id = d.id
+                where (d.city IN ($city_allow) AND a.state = 1) and a.type_state='1' 
+			 and a.apply_date <= '$lastdate' limit 1
+			";
+        $row = Yii::app()->db->createCommand($sql)->queryRow();
+        return ($row===false);
+    }
+
+
+    /**
     每月3日, 驗證 用户有月报表分析权限为读写的权限的未及时发送邮件, false: 未处理
      **/
     public function isMonthDispatch () {
@@ -223,9 +322,26 @@ class SysBlock {
         $city = Yii::app()->user->city();
         $suffix = Yii::app()->params['envSuffix'];
         $email=Yii::app()->user->email();
-        $lastdate = date('m')==10
-			? (date('d')<10 ? date('Y-m-d',strtotime(date('Y-m-10').' -3 months')) : date('Y-m-d',strtotime(date('Y-m-11').' -2 months')))
-			: (date('d')<3 ? date('Y-m-d',strtotime(date('Y-m-3').' -3 months')) : date('Y-m-d',strtotime(date('Y-m-4').' -2 months')));
+        $year = date('Y');
+        $day = date('d');
+        $month = date('n');
+        if($year==2022&&$month==2){//2022年春节处理(2022年2月14日)
+            if($day<14){
+                $lastdate = date('Y-m-d',strtotime(date('Y-m-14').' -3 months'));
+            }else{
+                $lastdate = date('Y-m-d',strtotime(date('Y-m-15').' -2 months'));
+            }
+        }elseif(in_array($month,array(10,5))){//（国庆、五一）特殊处理
+            if($day<10){
+                $lastdate = date('Y-m-d',strtotime(date('Y-m-10').' -3 months'));
+            }else{
+                $lastdate = date('Y-m-d',strtotime(date('Y-m-11').' -2 months'));
+            }
+        }elseif($day<3){ //每月三号以后限制两个月以前的报表汇总
+            $lastdate = date('Y-m-d',strtotime(date('Y-m-3').' -3 months'));
+        }else{
+            $lastdate = date('Y-m-d',strtotime(date('Y-m-4').' -2 months'));
+        }
         $year = date("Y", strtotime($lastdate));
         $month = date("n", strtotime($lastdate));
         $sql = "select a_control from security$suffix.sec_user_access 
@@ -234,16 +350,8 @@ class SysBlock {
         $row = Yii::app()->db->createCommand($sql)->queryRow();
         if ($row===false) return true;
         $subject="月报表总汇-" .$year.'/'.$month;
-//        if($month==1){
-//            $months=12;
-//            $years=$year-1;
-//       }else{
-//            $months=$month-1;
-//            $years=$year;
-//        }
-//        $subjectlast="月报表总汇-" .$years.'/'.$months;
         $star = date("Y-m-01", strtotime($lastdate));
-        $end = date("Y-m-31", strtotime($lastdate));
+        $end = date("Y-m-t", strtotime($lastdate));
         $sql = "select * from swoper$suffix.swo_month_email               
                 where city='$city' and  request_dt>= '$star' and  request_dt<= '$end' and subject='$subject' 	
 			";
@@ -362,6 +470,43 @@ class SysBlock {
                 if($title<0.85){//測驗後的正確率小於85%
                     return false;
                 }
+            }
+        }
+        return true;
+    }
+
+    /**
+    新入職員工一個月後提示錄入社会保障卡号
+     **/
+    public function validateSocialCode($key,&$value) {
+        $thisDay = intval(date("d"));
+        $maxDay = intval(date("t"));
+        $oldDate = date("Y-m-d",strtotime("-1 months"));
+        if($thisDay==16||$thisDay==$maxDay){//每月16號及最後一天彈窗提示
+            $uid = Yii::app()->user->id;
+            $city = Yii::app()->user->city();
+            $suffix = Yii::app()->params['envSuffix'];
+            $row = Yii::app()->db->createCommand()->select("b.id")->from("hr$suffix.hr_binding a")
+                ->leftJoin("hr$suffix.hr_employee b","a.employee_id=b.id")
+                ->leftJoin("security$suffix.sec_user_access e","a.user_id=e.username")
+                ->where("a.user_id=:user_id and e.system_id='hr' and (e.a_read_write like'%ZE01%' or e.a_read_write like'%ZG01%')",array(":user_id"=>$uid))->queryRow();
+            if($row){//有員工錄入及入職審核權限
+                $dateSql = "replace(entry_time,'/', '-')<='{$oldDate}' ";//一個月以前
+                $staffRows = Yii::app()->db->createCommand()->select("name")->from("hr$suffix.hr_employee")
+                    ->where("city=:city and staff_status in (0,4) and (social_code='' or social_code is null) and $dateSql",array(":city"=>$city))->queryAll();
+                if($staffRows){
+                    //有員工沒有填社保號
+                    $staffList = array();
+                    foreach ($staffRows as $staff){
+                        $staffList[] = $staff["name"];
+                    }
+                    $staffList = implode("、",$staffList);
+                    $value["message"].="<br>".Yii::t("block","username")."：".$staffList;
+                    $this->checkItems[$key]["function"]="";
+                    $value["function"]="";
+                    return false;
+                }
+
             }
         }
         return true;
