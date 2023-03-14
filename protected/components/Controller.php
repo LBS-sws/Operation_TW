@@ -37,6 +37,7 @@ class Controller extends CController
 
     public function beforeAction($action) {
         if (!Yii::app()->user->isGuest) {
+            General::includeDrsSysBlock();
             $obj = new SysBlock();
             $url = $obj->blockNRoute($this->id, $this->function_id);
             if ($url!==false) $this->redirect($url);
