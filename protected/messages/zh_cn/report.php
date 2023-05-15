@@ -34,7 +34,8 @@ return array(
 	'Grand Total'=>'总计',
 	'No Record'=>'没有相关记录',
 	
-	'China & Franchise'=>'中国及加盟商',
+	//'China & Franchise'=>'中国及加盟商',
+	'China & Franchise'=>'台湾',
 	'South East Asia'=>'东南亚',
 	'All'=>'全部',
 	'Clean_PC_Misc_Paper'=>'清洁_灭虫_杂项_纸品',
